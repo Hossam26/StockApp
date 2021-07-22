@@ -1,0 +1,112 @@
+<section id="profile" class="my-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            
+            <button type="button" class="btn mb-3 p-2 pl-4 w-75 font-weight-bold  bg-primary add_btn" data-toggle="modal" data-target="#addNote">
+            Add New Stock </button>     
+    
+    </div>
+        <div class="row " >
+            <!-- <div class="col-md-3 my-5" *ngFor="let note of Notes">
+                <div class="note shadow p-3 text-center" *ngIf="Notes[0]" >
+                    <div class="row">
+                        <div class="col-12">
+
+                            <div class="dropdown">
+                                <i class="fas fa-ellipsis-v float-right" role="button" id="dropdownMenuLink"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          
+                                    <a class="dropdown-item d-flex justify-content-between ">
+                                        <span class="text-left text-white " (click)="deleteNote()">delete Note</span>
+                                        <i class="far fa-trash-alt text-right text-white "></i>
+                                    </a>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-left font-weight-bold">{{note.title}}</h3>
+                    <p class="text-left">{{note.desc}}</p>
+                </div>
+            </div> -->
+            <table class="table text-white">
+      <thead class="text-center">
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th># Contractors</th>
+        <th>Buy value</th>
+        <th>current value</th>
+        <th>Yield</th>
+        <th></th>
+
+      </thead>
+      <tbody id="tableBody" >
+        <tr class="text-center" *ngFor="let stock of allStocks">
+            <td>{{stock.vwdKey}}</td>
+            <td>{{stock.name}}</td>
+            <td>{{stock.price}}</td>
+            <td>{{stock.volume||0}}</td>
+            <td>{{stock.open}}</td>
+            <td>{{stock.current}}</td>
+            <td>{{stock.yield}}</td>
+            <td><button (click)="deleteStock(stock)" class="btn text-white bg-danger">delete</button></td>
+            </tr>
+            <tr class="text-center">
+                <td class=" font-weight-bold">Total</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>{{totalBought}}</td>
+                <td>{{totalCur}}</td>
+                <td>{{totalYield}}</td>
+                </tr>
+      </tbody>
+    </table>
+
+
+        </div>
+    </div>
+</section>
+
+<!--Add Modal -->
+<div class="modal fade" id="addNote" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog text-black">
+        <div class="modal-content">
+            <form [formGroup]="addForm">
+                <div class="modal-header  ">
+                    <h3 class="modal-title" id="exampleModalLabel">Add Stock</h3>
+                    <button type="button" class="close text-white" data-dismiss="modal"  (click)="reset()"  aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h4>Symbol</h4>
+                    <input class="form-control mb-2" formControlName="vwdKey">
+                    <h4>Name</h4>
+                    <input class="form-control mb-2" formControlName="name">
+                    <h4>Price</h4>
+                    <input class="form-control mb-2"  formControlName="price">
+                    <h4># of Contractors</h4>
+                    <input class="form-control mb-2" formControlName="volume">
+                    <h4>Buy Value</h4>
+                    <input class="form-control mb-2" formControlName="open">
+                    <h4>Current Value</h4>
+                    <input class="form-control mb-2"  formControlName="previousClose">
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" (click)="addStock()" >Add</button>
+                    <button type="button" class="btn btn-danger"  (click)="reset()"  data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Modal -->
+
+
+
+
