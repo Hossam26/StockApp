@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { StockDataService } from "../stock-data.service";
 import { interval, timer } from "rxjs";
+import { waitForAsync } from '@angular/core/testing';
 declare var $:any
 
 @Component({
@@ -10,11 +11,16 @@ declare var $:any
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-   decoded:any;
+
+  constructor(private _StockService:StockDataService) {
+
+    this.getAllStocks()
+   }
+
+
    allStocks:any[]=[];
    newStocks:any[]=[];
    deletedStocks:any[]=[]
-
    totalBought=0
    totalCur=0;
    totalYield=0
@@ -60,80 +66,111 @@ export class HomeComponent implements OnInit {
    
  
    
-  constructor(private _StockService:StockDataService) {
-
-    this.getAllStocks()
-   }
+ 
 
  getAllStocks(){
-   let Duration= interval(5000)
-   Duration.subscribe(()=>{
-     this.allStocks=[]
-     this.totalBought=0
-     this.totalCur=0
-     this.totalYield=0
+  
     for(let i=0;i<this.data.length;i++){
+      
       this._StockService.getData(this.data[i]).subscribe((res)=>{
-        res.current=res.price*res.volume
-        res.yield=Number((((res.current-res.open)/res.open)*100)).toPrecision(3)
-
+        res.current=this.getCurValue(res)
+        res.yield=this.getYield(res)
+       
+        res.yield=res.yield.toPrecision(3)
         this.totalBought+=Number(res.open)
-        this.totalCur+=Number( res.current)
+        this.totalCur+=Number(res.current)
         this.totalYield+=Number(res.yield)
         this.allStocks.push(res)
+        
+      
+        if(i==this.data.length-1){
+
+          this.retrieveData()
+        }
       })
       
-         
     }
-    for(let i=0;i<this.newStocks.length;i++){
-      this.allStocks=this.allStocks.filter((item:any)=>{
-        return  item.vwdKey!=this.newStocks[i].vwdKey
+    let time=interval(5000)
+      time.subscribe(()=>{
+        this.allStocks.forEach(element => {
+          this._StockService.getData(element.vwdKey).subscribe((res)=>{
+                 element.price=res.price
+          })
+        });
       })
-      this.allStocks.push(this.newStocks[i])
+   
+    
+   
     }
-    for(let i=0;i<this.deletedStocks.length;i++){
-      this.allStocks=this.allStocks.filter((item:any)=>{
-        return  item.vwdKey!=this.deletedStocks[i].vwdKey
-   })
-    }
-   })
-        
-    }
-
-  ngOnInit(): void {
+  getCurValue(stock:any) {
+    return stock.price*stock.volume
   }
-reset(){
-this.addForm.controls.vwdKey.setValue("")
-this.addForm.controls.name.setValue("")
-this.addForm.controls.price.setValue("")
-this.addForm.controls.volume.setValue("")
-this.addForm.controls.open.setValue("")
-this.addForm.controls.previousClose.setValue("")
 
+
+addStock(){
+let newStock={
+  vwdKey:this.addForm.controls.vwdKey.value,
+  volume:this.addForm.controls.volume.value,
+  open:this.addForm.controls.open.value,
+  previousClose:this.addForm.controls.previousClose.value,
 }
+this.allStocks=this.allStocks.filter((item:any)=>{
+  return  item.vwdKey!=newStock.vwdKey
+})
+this.allStocks.push(newStock)
+this.newStocks.push(newStock)
+$('#addStock').modal('hide')
+this.reset()
+localStorage.setItem("addations",JSON.stringify(this.newStocks))
+}
+
+
+
 deleteStock(stock:any){
   this.allStocks=this.allStocks.filter((item:any)=>{
        return  item.vwdKey!=stock.vwdKey
   })
   this.deletedStocks.push(stock)
- 
-}
-addStock(){
-let newStock={
-  vwdKey:this.addForm.controls.vwdKey.value,
-  name:this.addForm.controls.name.value,
-  price:this.addForm.controls.price.value,
-  volume:this.addForm.controls.volume.value,
-  open:this.addForm.controls.open.value,
-  previousClose:this.addForm.controls.previousClose.value,
-  yield:(((this.addForm.controls.previousClose.value-this.addForm.controls.open.value)/this.addForm.controls.open.value)*100).toPrecision(3)
-}
-this.newStocks.push(newStock)
-this.allStocks=this.allStocks.filter((item:any)=>{
-  return  item.vwdKey!=newStock.vwdKey
-})
-this.allStocks.push(newStock)
+  localStorage.setItem("deletions",JSON.stringify(this.deletedStocks))
 
-$('#addNote').modal('hide')
+}
+
+
+
+ retrieveData(){
+  if(localStorage.getItem("addations")){
+    this.newStocks=JSON.parse(localStorage.getItem("addations")||"{}")
+    this.newStocks.forEach(element => {
+      this.allStocks=this.allStocks.filter((item:any)=>{
+        return item.vwdKey!=element.vwdKey
+      })
+      this.allStocks.push(element)
+    });
+    
+  }
+  if(localStorage.getItem("deletions")){
+    this.deletedStocks=JSON.parse(localStorage.getItem("deletions")||"{}")
+    this.deletedStocks.forEach(element => {
+      this.allStocks=this.allStocks.filter((item:any)=>{
+        return item.vwdKey!=element.vwdKey
+      })
+    });
+    
+  }
+  
+}
+getYield(stock:any){
+  return  Number((((stock.current-stock.price)/stock.price)*100))
+}
+
+
+
+reset(){
+  this.addForm.controls.vwdKey.setValue("")
+  this.addForm.controls.volume.setValue("")
+  this.addForm.controls.previousClose.setValue("")
+  
+  }
+ngOnInit(): void {
 }
 }
