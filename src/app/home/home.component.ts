@@ -147,19 +147,7 @@ buyStock(stock:Stock){
    this._Toastr.success(mssg)
 
 }
-sellStock(stock:Stock){
-   let mssg=this._StockService.sellStock(stock)
-   if(mssg.includes("no")==true){
-    this._Toastr.error(mssg)
 
-   }
-   else{
-    this._Toastr.success(mssg)
-
-   }
-
-   
-}
 
 
 getCurrentValue(stock:any) {

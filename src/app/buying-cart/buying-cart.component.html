@@ -25,6 +25,8 @@
             <td>{{getCurValue(stock)}}</td>
             <th>{{stock.quantity}}</th>
             <td>{{getYield(stock)}}</td>
+            <td><button (click)="sellStock(stock)" class="btn text-white bg-warning">sell</button></td>
+
             </tr>
             <tr class="text-center">
                 <td class=" font-weight-bold">Total</td>
