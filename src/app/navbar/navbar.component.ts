@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthGuardService } from "../auth-guard.service";
+import { AuthGuardService } from "../shared/service/auth-guard.service";
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',

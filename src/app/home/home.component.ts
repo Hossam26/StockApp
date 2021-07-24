@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { StockDataService } from "../stock-data.service";
 import { interval, timer } from "rxjs";
-import { waitForAsync } from '@angular/core/testing';
+import { CurrencyService } from "../shared/service/currency.service";
+import { StockDataService } from "../shared/service/stock-data.service";
+import { Stock } from '../shared/interface/stock';
 declare var $:any
 
 @Component({
@@ -12,15 +13,13 @@ declare var $:any
 })
 export class HomeComponent implements OnInit {
 
-  constructor(private _StockService:StockDataService) {
+  constructor(private _StockService:StockDataService,private _Currency:CurrencyService) {
 
     this.getAllStocks()
    }
 
 
-   allStocks:any[]=[];
-   newStocks:any[]=[];
-   deletedStocks:any[]=[]
+   allStocks:Stock[]=[];
    totalBought=0
    totalCur=0;
    totalYield=0
@@ -52,28 +51,21 @@ export class HomeComponent implements OnInit {
   
    addForm=new FormGroup({
     vwdKey:new FormControl('',Validators.required,),
-     name:new FormControl('',Validators.required,),
-     price:new FormControl('',Validators.required),
      volume:new FormControl('',Validators.required),
      open:new FormControl('',Validators.required),
-     previousClose :new FormControl('',Validators.required),
-     
-
-
-
+    
    });
  
    
  
    
- 
 
  getAllStocks(){
   
     for(let i=0;i<this.data.length;i++){
       
       this._StockService.getData(this.data[i]).subscribe((res)=>{
-        res.current=this.getCurValue(res)
+        res.current=this.getCurValue(res).toPrecision(3)
         res.yield=this.getYield(res)
        
         res.yield=res.yield.toPrecision(3)
@@ -93,7 +85,7 @@ export class HomeComponent implements OnInit {
     let time=interval(5000)
       time.subscribe(()=>{
         this.allStocks.forEach(element => {
-          this._StockService.getData(element.vwdKey).subscribe((res)=>{
+          this._StockService.getData(element.vwdKey.toUpperCase()).subscribe((res)=>{
                  element.price=res.price
           })
         });
@@ -110,53 +102,30 @@ export class HomeComponent implements OnInit {
 addStock(){
 let newStock={
   vwdKey:this.addForm.controls.vwdKey.value,
+  name:"",
+  price:0,
   volume:this.addForm.controls.volume.value,
   open:this.addForm.controls.open.value,
-  previousClose:this.addForm.controls.previousClose.value,
+  current:0,
+  yield:0
 }
-this.allStocks=this.allStocks.filter((item:any)=>{
-  return  item.vwdKey!=newStock.vwdKey
-})
-this.allStocks.push(newStock)
-this.newStocks.push(newStock)
+this.allStocks=this._StockService.addNewStock(newStock)
 $('#addStock').modal('hide')
 this.reset()
-localStorage.setItem("addations",JSON.stringify(this.newStocks))
+
 }
 
 
 
-deleteStock(stock:any){
-  this.allStocks=this.allStocks.filter((item:any)=>{
-       return  item.vwdKey!=stock.vwdKey
-  })
-  this.deletedStocks.push(stock)
-  localStorage.setItem("deletions",JSON.stringify(this.deletedStocks))
-
+deleteStock(stock:Stock){
+  this.allStocks=this._StockService.removeStock(stock)
 }
 
 
 
  retrieveData(){
-  if(localStorage.getItem("addations")){
-    this.newStocks=JSON.parse(localStorage.getItem("addations")||"{}")
-    this.newStocks.forEach(element => {
-      this.allStocks=this.allStocks.filter((item:any)=>{
-        return item.vwdKey!=element.vwdKey
-      })
-      this.allStocks.push(element)
-    });
-    
-  }
-  if(localStorage.getItem("deletions")){
-    this.deletedStocks=JSON.parse(localStorage.getItem("deletions")||"{}")
-    this.deletedStocks.forEach(element => {
-      this.allStocks=this.allStocks.filter((item:any)=>{
-        return item.vwdKey!=element.vwdKey
-      })
-    });
-    
-  }
+   this._StockService.allStocks=this.allStocks
+  this.allStocks=this._StockService.retrievePrevData()
   
 }
 getYield(stock:any){
