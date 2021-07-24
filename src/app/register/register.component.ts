@@ -22,16 +22,17 @@ export class RegisterComponent implements OnInit {
 if(this.registerForm.invalid){
   return
 }
-this._AuthService.registerData(this.registerForm.value).subscribe((data)=>{
-   if(1){
+let data=this._AuthService.registerData()
+
+   if(data==true){
      this._Toastr.success("Registered successfully")
      this._Router.navigateByUrl("/login")
    }
    else{
-     this._Toastr.error(data.message)
+     return
    }
-})
-  }
+}
+  
   ngOnInit(): void {
   }
 

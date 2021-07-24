@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { interval, timer } from "rxjs";
+import { interval, of, from, Subject } from 'rxjs';
+import { mergeMap, tap, takeUntil } from 'rxjs/operators';
 import { CurrencyService } from "../shared/service/currency.service";
 import { StockDataService } from "../shared/service/stock-data.service";
 import { Stock } from '../shared/interface/stock';
+import { ToastrService } from 'ngx-toastr';
 declare var $:any
 
 @Component({
@@ -13,17 +15,26 @@ declare var $:any
 })
 export class HomeComponent implements OnInit {
 
-  constructor(private _StockService:StockDataService,private _Currency:CurrencyService) {
+  constructor(private _StockService:StockDataService, private _Toastr:ToastrService, private _Currency:CurrencyService) {
 
-    this.getAllStocks()
    }
+
+   ngOnInit(): void {
+    this.refershPrice()
+    this.getAllStocks()
+  
+  }
+
+   private destory$: Subject<void> = new Subject();
 
 
    allStocks:Stock[]=[];
    totalBought=0
    totalCur=0;
    totalYield=0
-   data=["AEX.NL","AALB.NL",
+   symbols=of(
+     "AEX.NL",
+     "AALB.NL",
     "ABN.NL",
     "ADYEN.NL",
     "AGN.NL",
@@ -46,8 +57,8 @@ export class HomeComponent implements OnInit {
     "TKWY.NL",
     "URW.NL",
     "UNA.NL"
-  ]
-   
+   )
+   lastDataIndex=24
   
    addForm=new FormGroup({
     vwdKey:new FormControl('',Validators.required,),
@@ -61,43 +72,47 @@ export class HomeComponent implements OnInit {
    
 
  getAllStocks(){
-  
-    for(let i=0;i<this.data.length;i++){
-      
-      this._StockService.getData(this.data[i]).subscribe((res)=>{
-        res.current=this.getCurValue(res).toPrecision(3)
-        res.yield=this.getYield(res)
-       
-        res.yield=res.yield.toPrecision(3)
-        this.totalBought+=Number(res.open)
-        this.totalCur+=Number(res.current)
-        this.totalYield+=Number(res.yield)
-        this.allStocks.push(res)
-        
-      
-        if(i==this.data.length-1){
-
-          this.retrieveData()
-        }
-      })
-      
+  from(this.symbols)
+  .pipe(
+    mergeMap((symbol) => this._StockService.getData(symbol)), // looping through symbols then Sending multiple parallel HTTP requests
+    tap(console.log),
+    takeUntil(this.destory$)
+  )
+  .subscribe(
+    (res: Stock) => {
+      this.totalBought += Number(res.open);
+      this.allStocks.push(res);
+      if (this.allStocks.length==this.lastDataIndex) {
+        this.retrieveData();
+      }
+    },
+    (error) => {
+      console.log(error);
     }
-    let time=interval(5000)
-      time.subscribe(()=>{
-        this.allStocks.forEach(element => {
-          this._StockService.getData(element.vwdKey.toUpperCase()).subscribe((res)=>{
-                 element.price=res.price
-          })
-        });
-      })
+  );
+
+  
+    
    
     
    
     }
-  getCurValue(stock:any) {
-    return stock.price*stock.volume
-  }
+  
 
+    refershPrice() {
+      let time = interval(5000);
+      time.pipe(
+        takeUntil(this.destory$)
+      ).
+      subscribe(() => {
+        this.allStocks.forEach((element: Stock) => {
+          const vwdkey = element.vwdKey?.toLocaleUpperCase();
+          this._StockService.getData(vwdkey || '').subscribe((res) => {
+            element.price = res.price;
+          });
+        });
+      });
+    }
 
 addStock(){
 let newStock={
@@ -106,6 +121,7 @@ let newStock={
   price:0,
   volume:this.addForm.controls.volume.value,
   open:this.addForm.controls.open.value,
+  quantity:0,
   current:0,
   yield:0
 }
@@ -116,20 +132,53 @@ this.reset()
 }
 
 
-
 deleteStock(stock:Stock){
-  this.allStocks=this._StockService.removeStock(stock)
+  this.allStocks= this._StockService.removeStock(stock)
 }
-
-
 
  retrieveData(){
    this._StockService.allStocks=this.allStocks
   this.allStocks=this._StockService.retrievePrevData()
   
 }
+
+buyStock(stock:Stock){
+   let mssg=this._StockService.buyStock(stock)
+   this._Toastr.success(mssg)
+
+}
+sellStock(stock:Stock){
+   let mssg=this._StockService.sellStock(stock)
+   if(mssg.includes("no")==true){
+    this._Toastr.error(mssg)
+
+   }
+   else{
+    this._Toastr.success(mssg)
+
+   }
+
+   
+}
+
+
+getCurrentValue(stock:any) {
+  const currentValue = stock.price || 0;
+    const quantity = stock.volume || 0;
+   
+  let currentVal= (currentValue as number) * quantity;
+  this.totalCur+=currentVal
+
+  return currentVal
+}
+
+
 getYield(stock:any){
-  return  Number((((stock.current-stock.price)/stock.price)*100))
+  const currentValue = this.getCurrentValue(stock) || 0;
+  const price = stock.price || 0;
+  let yieldVal=  (((currentValue as number) - price) / price) * 100;
+  this.totalYield+=yieldVal
+  return yieldVal.toPrecision(3)
 }
 
 
@@ -140,6 +189,8 @@ reset(){
   this.addForm.controls.previousClose.setValue("")
   
   }
-ngOnInit(): void {
+
+ngOnDestroy() {
+  this.destory$.unsubscribe();
 }
 }

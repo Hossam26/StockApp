@@ -21,21 +21,20 @@ export class LoginComponent implements OnInit {
     if(this.loginForm.invalid){
       return 
     }
-    this._AuthService.loginData(this.loginForm.value).subscribe((data)=>{
+   let data= this._AuthService.loginData()
       
-      if(data.message=="success"){
+      if(data==true){
          localStorage.setItem("checked","true")
-         localStorage.setItem("token",data.token)
 
-         this._Toastr.success(`Welcome ${data.user.first_name}`)
+         this._Toastr.success(`Welcome`)
          this._AuthGuardService.isLogin.next(true)
          this._Router.navigateByUrl("/home")
 
        }
        else{
-        this._Toastr.error(data.message)
+       return
        }
-    })
+    
   }
   ngOnInit(): void {
   }

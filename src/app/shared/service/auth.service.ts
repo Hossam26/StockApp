@@ -9,10 +9,10 @@ export class AuthService {
 
   constructor(private _HttpClient:HttpClient) {
    }
-  registerData(registerValues:any):Observable<any>{
-    return this._HttpClient.post(``,registerValues)
+  registerData():boolean{
+    return true
   }
-  loginData(loginValues:any):Observable<any>{
-    return this._HttpClient.post(``,loginValues)
+  loginData():boolean{
+    return true
   }
 }

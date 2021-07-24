@@ -4,14 +4,17 @@ import { AuthGuardService } from './shared/service/auth-guard.service';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from "./login/login.component";
 import { RegisterComponent } from './register/register.component';
+import { BuyingCartComponent } from './buying-cart/buying-cart.component';
 const routes: Routes = [
   {path:'' ,redirectTo:'home',pathMatch:'full'},
   {path:'home',component:HomeComponent,canActivate:[AuthGuardService]},
   {path:'login',component:LoginComponent},
   {path:'register',component:RegisterComponent},
-]
+  {path:'buying-cart',component:BuyingCartComponent,canActivate:[AuthGuardService]},
+
+];
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes,{useHash:true})],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

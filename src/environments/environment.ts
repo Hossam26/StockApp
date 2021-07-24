@@ -3,8 +3,11 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: true,
+  apiUrlStock:
+    'https://test.solutions.vwdservices.com/internal/intake-test/sample-data/price-data/',
 };
+
 
 /*
  * For easier debugging in development mode, you can import the following file

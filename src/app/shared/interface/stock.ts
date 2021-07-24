@@ -5,5 +5,6 @@ export interface Stock {
     volume:number,
     open:number,
     current:number,
-    yield:number
+    quantity:number,
+    yield?:number
 }

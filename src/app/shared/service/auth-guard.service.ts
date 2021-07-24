@@ -9,7 +9,7 @@ export class AuthGuardService implements CanActivate {
   
   canActivate():boolean|Observable<any>{
     let checked=localStorage.getItem("checked");
-    if (1){
+    if (checked=="true"){
       this.isLogin.next(true)
       return true
     }
